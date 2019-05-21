@@ -2,7 +2,10 @@ const path = require('path')
 
 module.exports = {
 	entry: {
-		app: './src/index.js'
+		index: './js/index.js',
+		new: './js/new.js',
+		hints: './js/hints.js', 
+		'view-and-edit': './js/view-and-edit.js'
 	},
 	output: {
 		filename: '[name].js',

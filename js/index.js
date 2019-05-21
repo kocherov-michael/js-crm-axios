@@ -1,3 +1,5 @@
+import dbRequest from './request'
+
 const trElementTemplate = `
 <tr class="bid-row" data-order-row>
 	<td scope="row">
@@ -17,98 +19,88 @@ const filterPaymentElement = document.querySelector('[data-filter-payment-status
 const filterGoodsElement = document.querySelector('[data-filter-good]')
 const buttonGenerateElement = document.querySelector('[data-generate]')
 
-if (filterRequestElement){
-	filterRequestElement.addEventListener('change', event => {
-		event.stopPropagation()
-		main()
-	})
-}
-if (filterPaymentElement){
-	filterPaymentElement.addEventListener('change', event => {
-		event.stopPropagation()
-		main()
-	})
-}
-if (filterGoodsElement){
-	filterGoodsElement.addEventListener('change', event => {
-		event.stopPropagation()
-		main()
-	})
-}
+filterRequestElement.addEventListener('change', event => {
+	event.stopPropagation()
+	main()
+})
+filterPaymentElement.addEventListener('change', event => {
+	event.stopPropagation()
+	main()
+})
+filterGoodsElement.addEventListener('change', event => {
+	event.stopPropagation()
+	main()
+})
 
 // Генерация заказов
-if(document.querySelector('[data-generate]')) {
-	document
-		.querySelector('[data-generate]')
-		.addEventListener('click', function (event) {
-			event.stopPropagation()
-			dbRequest.generateOrder(5, data => {
-				main()
-				createFilterGoodsList()
-			})
-		})
-}
+document
+	.querySelector('[data-generate]')
+	.addEventListener('click', async function (event) {
+		event.stopPropagation()
+
+		const {data} = await dbRequest.generateOrder(5)
+		main()
+		createFilterGoodsList()
+	})
 
 main()
 createFilterGoodsList()
 
 //Вывод списка заказов согласно фильтру
-function main() {
-	dbRequest.getList(data => {
+async function main() {
+	const {data} = await dbRequest.getList()
 
-		//Очистка списка заказов
-		const rootDir = document.getElementById('listViewer')
-		rootDir.innerHTML = ''
+	//Очистка списка заказов
+	const rootDir = document.getElementById('listViewer')
+	rootDir.innerHTML = ''
 
-		//Выбор фильтра для заказов
-		const filterRequestIndex = filterRequestElement.options.selectedIndex
-		const filterPaymentIndex = filterPaymentElement.options.selectedIndex
-		const filterGoodIndex = filterGoodsElement.options.selectedIndex
+	//Выбор фильтра для заказов
+	const filterRequestIndex = filterRequestElement.options.selectedIndex
+	const filterPaymentIndex = filterPaymentElement.options.selectedIndex
+	const filterGoodIndex = filterGoodsElement.options.selectedIndex
 
-		for (const item of data) {
-			const isRequestStatusCoincide = filterRequestIndex === 0 || item.requestStatus === filterRequestIndex
-			const isPaymentStatusCoincide = filterPaymentIndex === 0 || item.paymentStatus === filterPaymentIndex
-			const isGoodCoincide = filterGoodIndex === -1 || filterGoodIndex === 0 || item.good === filterGoodsElement.value
-			if (isRequestStatusCoincide && isPaymentStatusCoincide && isGoodCoincide) {
+	for (const item of data) {
+		const isRequestStatusCoincide = filterRequestIndex === 0 || item.requestStatus === filterRequestIndex
+		const isPaymentStatusCoincide = filterPaymentIndex === 0 || item.paymentStatus === filterPaymentIndex
+		const isGoodCoincide = filterGoodIndex === -1 || filterGoodIndex === 0 || item.good === filterGoodsElement.value
+		if (isRequestStatusCoincide && isPaymentStatusCoincide && isGoodCoincide) {
 
-				const tbodyElement = document.createElement('tbody')
-				const requestStatusSpanElement = getElementByRequestStatusNumber(item.requestStatus)
-				const paymentStatusSpanElement = getElementByPaymentStatusNumber(item.paymentStatus)
+			const tbodyElement = document.createElement('tbody')
+			const requestStatusSpanElement = getElementByRequestStatusNumber(item.requestStatus)
+			const paymentStatusSpanElement = getElementByPaymentStatusNumber(item.paymentStatus)
 
-				tbodyElement.innerHTML = trElementTemplate
-					.replace('%ID%', item.id)
-					.replace('%ID%', item.id)
-					.replace('%GOOD%', item.good)
-					.replace('%PRICE%', getPriceNormalize(item.price))
-					.replace('%CLIENT_NAME%', item.clientName)
-					.replace('%REQUEST_STATUS%', requestStatusSpanElement.outerHTML || '')
-					.replace('%PAYMENT_STATUS%', paymentStatusSpanElement.outerHTML || '')
+			tbodyElement.innerHTML = trElementTemplate
+				.replace('%ID%', item.id)
+				.replace('%ID%', item.id)
+				.replace('%GOOD%', item.good)
+				.replace('%PRICE%', getPriceNormalize(item.price))
+				.replace('%CLIENT_NAME%', item.clientName)
+				.replace('%REQUEST_STATUS%', requestStatusSpanElement.outerHTML || '')
+				.replace('%PAYMENT_STATUS%', paymentStatusSpanElement.outerHTML || '')
 
-				rootDir.append(tbodyElement.firstElementChild)
-			}
+			rootDir.append(tbodyElement.firstElementChild)
 		}
-	})
+	}
 }	
 
 // Создание списка фильтрации по товарам
-function createFilterGoodsList(){
-	dbRequest.getList(data => {
-	
-		filterGoodsElement.innerHTML = ''
+async function createFilterGoodsList(){
+	const {data} = await dbRequest.getList()
 
-		const goodsList = []
-		for (let i = 0; i < data.length; i++) {
-			goodsList.push(data[i].good)
-		}
-		// Создание списка с оригинальными названиями товаров
-		const goodsListOriginals = ['Выберите...', ...new Set(goodsList)]
+	filterGoodsElement.innerHTML = ''
 
-		for (let i = 0; i < goodsListOriginals.length; i++) {
-			const optionElement = document.createElement('option')
-			optionElement.textContent = goodsListOriginals[i]
-			filterGoodsElement.append(optionElement)
-		}
-	})
+	const goodsList = []
+	for (let i = 0; i < data.length; i++) {
+		goodsList.push(data[i].good)
+	}
+	// Создание списка с оригинальными названиями товаров
+	const goodsListOriginals = ['Выберите...', ...new Set(goodsList)]
+
+	for (let i = 0; i < goodsListOriginals.length; i++) {
+		const optionElement = document.createElement('option')
+		optionElement.textContent = goodsListOriginals[i]
+		filterGoodsElement.append(optionElement)
+	}
 }
 
 // Нормализация цены для отображения на странице

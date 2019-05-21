@@ -1,13 +1,13 @@
+import dbRequest from './request'
+
 const buttonCreateOrder = document.querySelector('[data-create-order]')
 if (buttonCreateOrder) {
-	buttonCreateOrder.addEventListener('click', buttonCreateOrderClickHandler)
-}
-function buttonCreateOrderClickHandler (event) {
-	event.stopPropagation()
+	buttonCreateOrder.addEventListener('click', async function (event) {
+		event.stopPropagation()
+		
+		const orderData = getOrderData()
 
-	const orderData = getOrderData()
-
-	dbRequest.createOrder(orderData, () => {
+		await dbRequest.createOrder(orderData)
 		location.replace('index.html')
 	})
 }
